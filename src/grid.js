@@ -63,7 +63,7 @@ export default class Grid {
         cell.meta.continuity += 1;
         cell.hsl[0] = ((
           sum(aliveNeighbours, c => c.hsl[0]) / aliveNeighbours.length
-        ) + 10) % 360;
+        )) % 360;
 
       } else if ((cell.value === 1) && (count != 2 && count != 3)) { //If alive not 2-3 neighbours, die
 
@@ -73,6 +73,7 @@ export default class Grid {
       } else {
         // cell.meta.continuity += 1;
         // cell.hsl[0] = Math.max(cell.hsl[0] + 1) % 360;
+        cell.hsl[0] = (cell.hsl[0] + 1) % 360;
       }
     });
 

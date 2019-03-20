@@ -1,4 +1,4 @@
-const framesPerSecond = 30
+const framesPerSecond = 10
 const cellStrokeColor = '#000'
 const cellFillColor = '';
 const clearColor = '';
@@ -33,17 +33,21 @@ import Game from './game.js';
 import Grid from './grid.js';
 
 
-const makeMouseHandler = game => ({
+const makeMouseMoveHandler = game => ({
   offsetX,
   offsetY
 }) => {
   game.setCursor([offsetX, offsetY]);
 };
 
+const makeMouseClickHandler = game => () => {
+  game.addPattern();
+};
+
 
 const init = () => {
   const canvasSize = [window.innerWidth, window.innerHeight];
-  const cellCount = [250, 150];
+  const cellSize = 4;
 
   const canvas = document.getElementById('canvas');
   canvas.width = canvasSize[0];
@@ -53,17 +57,18 @@ const init = () => {
 
   const game = new Game(ctx, themes.default, timers.raf)
 
-  const mouseHandler = makeMouseHandler(game);
-  canvas.addEventListener('click', mouseHandler);
-  canvas.addEventListener('mousemove', mouseHandler);
+  const mouseMoveHandler = makeMouseMoveHandler(game);
+  const mouseClickHandler = makeMouseClickHandler(game);
+  canvas.addEventListener('click', mouseClickHandler);
+  canvas.addEventListener('mousemove', mouseMoveHandler);
   canvas.addEventListener('mouseout', () => {
     game.removeCursor();
   });
 
-  const grid = new Grid(cellCount[0], cellCount[1])
-  grid.seed(1 / 2);
+  const grid = new Grid(Math.floor(canvasSize[0] / cellSize), Math.floor(canvasSize[1] / cellSize));
+  grid.seed(1 / 10);
 
-  game.start(grid);
+  game.start(grid, cellSize);
 }
 
 init();

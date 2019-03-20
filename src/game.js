@@ -1,3 +1,20 @@
+const patterns = {
+  glider: [
+    [0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0],
+  ],
+
+  repeatCircle: [
+    [0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0],
+  ],
+};
+
 export default class Game {
   constructor(ctx, colors, timer) {
     this.ctx = ctx;
@@ -5,14 +22,14 @@ export default class Game {
     this.timer = timer;
     this.handle = null;
     this.cursor = null;
+
+    // Glider
+    this.pattern = patterns.glider;
   }
 
-  start(grid) {
+  start(grid, cellSize) {
     this.grid = grid;
-    this.cellSize = [
-      this.ctx.canvas.width / this.grid.width,
-      this.ctx.canvas.height / this.grid.height,
-    ];
+    this.cellSize = cellSize;
     this.queue();
   }
 
@@ -27,8 +44,25 @@ export default class Game {
 
   setCursor(cursorTuple) {
     this.cursor = cursorTuple.map((value, axis) =>
-      Math.floor(value / this.cellSize[axis]) * this.cellSize[axis]
+      Math.floor(value / this.cellSize)
     );
+  }
+
+  addPattern() {
+    if (!this.cursor) return;
+
+    this.grid.eachCell((cell, {
+      row,
+      column
+    }) => {
+      const y = (row - this.cursor[1]);
+      const x = (column - this.cursor[0]);
+      const value = this.pattern[y] && this.pattern[y][x];
+      if (value === 1) {
+        cell.value = 1;
+        cell.meta.continuity = 0;
+      }
+    });
   }
 
   removeCursor() {
@@ -53,10 +87,10 @@ export default class Game {
       this.ctx.fillStyle = cell.color();
 
       const rect = [
-        column * this.cellSize[0],
-        row * this.cellSize[1],
-        this.cellSize[0],
-        this.cellSize[1],
+        column * this.cellSize,
+        row * this.cellSize,
+        this.cellSize,
+        this.cellSize,
       ];
 
       this.ctx.fillRect(...rect);
@@ -65,14 +99,32 @@ export default class Game {
     });
   }
 
+  drawPattern() {
+    if (!this.cursor || !this.pattern) return;
+
+    this.ctx.fillStyle = "rgba(50, 50, 50, .4)";
+    this.pattern.forEach((rowValues, row) => {
+      rowValues.forEach((value, column) => {
+        if (!value) return;
+
+        this.ctx.fillRect(
+          (this.cursor[0] + column) * this.cellSize,
+          (this.cursor[1] + row) * this.cellSize,
+          this.cellSize,
+          this.cellSize
+        );
+      });
+    });
+  }
+
   drawCursor() {
     if (!this.cursor) return;
     this.ctx.fillStyle = "#FF00FF";
     this.ctx.fillRect(
-      this.cursor[0],
-      this.cursor[1],
-      this.cellSize[0],
-      this.cellSize[1]
+      this.cursor[0] * this.cellSize,
+      this.cursor[1] * this.cellSize,
+      this.cellSize,
+      this.cellSize
     );
   }
 
@@ -80,6 +132,7 @@ export default class Game {
     this.erase();
     this.grid.update();
     this.draw();
+    this.drawPattern();
     this.drawCursor();
 
     this.queue();
