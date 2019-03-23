@@ -1,3 +1,7 @@
+import Game from './game.js';
+import Grid from './grid.js';
+import CanvasRenderer from './renderers/canvas.js';
+
 const framesPerSecond = 30
 const cellStrokeColor = '#000'
 const cellFillColor = '';
@@ -27,12 +31,6 @@ const themes = {
   },
 };
 
-const colors = themes.default;
-
-import Game from './game.js';
-import Grid from './grid.js';
-
-
 const makeMouseHandler = game => ({
   offsetX,
   offsetY
@@ -42,28 +40,32 @@ const makeMouseHandler = game => ({
 
 
 const init = () => {
-  const canvasSize = [window.innerWidth, window.innerHeight];
-  const cellCount = [250, 150];
+  const renderer = new CanvasRenderer(document.body, themes.default, 8);
+  const gridSize = renderer.calculateGridSize();
 
-  const canvas = document.getElementById('canvas');
-  canvas.width = canvasSize[0];
-  canvas.height = canvasSize[1];
-
-  const ctx = canvas.getContext('2d');
-
-  const game = new Game(ctx, themes.default, timers.raf)
+  const game = new Game(timers.raf, renderer)
 
   const mouseHandler = makeMouseHandler(game);
-  canvas.addEventListener('click', mouseHandler);
-  canvas.addEventListener('mousemove', mouseHandler);
-  canvas.addEventListener('mouseout', () => {
+  renderer.element.addEventListener('click', mouseHandler);
+  renderer.element.addEventListener('mousemove', mouseHandler);
+  renderer.element.addEventListener('mouseout', () => {
     game.removeCursor();
   });
 
-  const grid = new Grid(cellCount[0], cellCount[1])
+  const grid = new Grid(gridSize.width, gridSize.height);
   grid.seed(1 / 2);
 
   game.start(grid);
+
+  if (module.hot) {
+    module.hot.dispose(() => {
+      renderer.unmount();
+    });
+
+    module.hot.accept(() => {
+      renderer.mount(document.body);
+    });
+  }
 }
 
 init();
